@@ -5,22 +5,22 @@ import java.awt.event.ActionListener;
 
 public class GamePanel extends JPanel implements ActionListener {
 
-    // px per cell
+    
     private static final int CELL = 30;
 
     private static final int BOARD_W = Board.COLS * CELL;
     private static final int BOARD_H = Board.ROWS * CELL;
     private static final int SIDE_W  = 160;
     private static final int PANEL_W = BOARD_W + SIDE_W;
-    private static final int PANEL_H = BOARD_H + 40; // +40 for title bar
+    private static final int PANEL_H = BOARD_H + 40; 
 
-    // points for 1/2/3/4 lines cleared
+   
     private static final int[] LINE_SCORES = {0, 100, 300, 500, 800};
 
     private static final Color BG_COLOR      = new Color(15,  15,  25);
     private static final Color GRID_COLOR    = new Color(40,  40,  60);
     private static final Color BORDER_COLOR  = new Color(80,  80, 120);
-    private static final Color GHOST_COLOR   = new Color(255, 255, 255, 50); // translucent
+    private static final Color GHOST_COLOR   = new Color(255, 255, 255, 50); 
     private static final Color TEXT_COLOR    = new Color(200, 200, 230);
     private static final Color LABEL_COLOR   = new Color(120, 120, 160);
     private static final Color PAUSED_OVERLAY= new Color(0,   0,   0,  160);
@@ -36,26 +36,23 @@ public class GamePanel extends JPanel implements ActionListener {
     private boolean gameOver;
     private boolean paused;
 
-    // Gravity timer — restarted on level change to apply new delay
+
     private final Timer gameTimer;
     private int timerDelay;
 
-    /**
-     * Initialises panel and board. Call {@link #startNewGame()} after
-     * attaching to a window so repaint() works.
-     */
+    
     public GamePanel() {
         setPreferredSize(new Dimension(PANEL_W, PANEL_H));
         setBackground(BG_COLOR);
         setFocusable(true);
 
         board     = new Board();
-        gameTimer = new Timer(500, this); // delay overridden in startNewGame
+        gameTimer = new Timer(500, this); 
 
         addKeyListener(new InputHandler(this));
     }
 
-    /** Resets all state and starts fresh. Safe to call mid-game for restart. */
+
     public void startNewGame() {
         board.clear();
         score        = 0;
@@ -74,7 +71,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /** Spawns next piece at the top; sets gameOver if spawn position is blocked. */
+   
     private void spawnPiece() {
         activePiece = new Tetromino(nextType);
         nextType    = TetrominoType.random();
@@ -85,7 +82,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    /** Gravity tick — drops piece one row, locks if it can't move further. */
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (gameOver || paused) return;
@@ -99,7 +96,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /** Locks active piece, clears lines, updates score/level, spawns next piece. */
+
     private void lockAndSpawn() {
         board.lock(activePiece);
 
@@ -108,7 +105,7 @@ public class GamePanel extends JPanel implements ActionListener {
             score        += LINE_SCORES[lines] * level;
             linesCleared += lines;
 
-            // Level up every 10 lines
+
             int newLevel = (linesCleared / 10) + 1;
             if (newLevel != level) {
                 level      = newLevel;
@@ -120,26 +117,25 @@ public class GamePanel extends JPanel implements ActionListener {
         spawnPiece();
     }
 
-    /** 1000 ms at level 1, -80 ms per level, floor 100 ms. */
+
     private int gravityDelay(int lvl) {
         return Math.max(100, 1000 - (lvl - 1) * 80);
     }
 
-    // ---- Player commands (called by InputHandler) ----------------------------
 
     public void movePieceLeft() {
         activePiece.moveLeft();
-        if (board.collides(activePiece)) activePiece.moveRight(); // undo
+        if (board.collides(activePiece)) activePiece.moveRight(); 
         repaint();
     }
 
     public void movePieceRight() {
         activePiece.moveRight();
-        if (board.collides(activePiece)) activePiece.moveLeft(); // undo
+        if (board.collides(activePiece)) activePiece.moveLeft(); 
         repaint();
     }
 
-    /** Soft drop: 1 bonus point per row (Tetris Guideline). */
+
     public void softDrop() {
         activePiece.moveDown();
         if (board.collides(activePiece)) {
@@ -151,7 +147,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /** Hard drop: teleports to ghost position, 2 pts/row. */
+    
     public void hardDrop() {
         int rowsBefore = activePiece.getRow();
         while (!board.collides(activePiece)) {
@@ -163,7 +159,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /** Rotates CW with wall-kick; undoes rotation if no kick resolves it. */
+    
     public void rotatePieceClockwise() {
         activePiece.rotateClockwise();
         if (!tryResolveCollisionAfterRotation()) {
@@ -172,7 +168,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /** Rotates CCW with wall-kick; undoes rotation if no kick resolves it. */
+
     public void rotatePieceCounterClockwise() {
         activePiece.rotateCounterClockwise();
         if (!tryResolveCollisionAfterRotation()) {
@@ -181,10 +177,7 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    /**
-     * Tries to resolve a post-rotation collision by nudging ±1 or ±2 columns.
-     * @return true if position is valid (possibly after kicking)
-     */
+
     private boolean tryResolveCollisionAfterRotation() {
         if (!board.collides(activePiece)) return true;
 
@@ -194,11 +187,9 @@ public class GamePanel extends JPanel implements ActionListener {
         activePiece.moveRight(); activePiece.moveRight();
         if (!board.collides(activePiece)) return true;
 
-        // Extra kick right for I-piece near walls
         activePiece.moveRight();
         if (!board.collides(activePiece)) return true;
 
-        // Restore original column
         activePiece.moveLeft(); activePiece.moveLeft(); activePiece.moveLeft();
         return false;
     }
@@ -211,12 +202,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public boolean isGameOver() { return gameOver; }
     public boolean isPaused()   { return paused;   }
 
-    // ---- Ghost piece ---------------------------------------------------------
 
-    /**
-     * Simulates dropping the active piece to find its landing row.
-     * Restores the piece to its original position before returning.
-     */
     private int computeGhostRow() {
         int originalRow = activePiece.getRow();
 
@@ -224,19 +210,13 @@ public class GamePanel extends JPanel implements ActionListener {
         activePiece.moveUp();
         int ghostRow = activePiece.getRow();
 
-        // Move back up — no direct row setter available
+
         while (activePiece.getRow() > originalRow) activePiece.moveUp();
 
         return ghostRow;
     }
 
-    // ---- Rendering -----------------------------------------------------------
 
-    /**
-     * Painter's-algorithm render order:
-     * background → grid → locked cells → ghost → active piece →
-     * border → side panel → overlay (pause/game over)
-     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -280,7 +260,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    /** Translucent shadow showing where the active piece will land. */
+    
     private void drawGhostPiece(Graphics2D g) {
         int rowOffset = computeGhostRow() - activePiece.getRow();
         if (rowOffset <= 0) return;
@@ -299,12 +279,11 @@ public class GamePanel extends JPanel implements ActionListener {
             if (activePiece.isFilled(i)) {
                 int r = activePiece.cellRow(i);
                 int c = activePiece.cellCol(i);
-                if (r >= 0) drawCell(g, r, c, activePiece.getColor()); // clip off-screen rows
+                if (r >= 0) drawCell(g, r, c, activePiece.getColor()); 
             }
         }
     }
 
-    /** Filled rect with bevel: bright top-left, dark bottom-right edges. */
     private void drawCell(Graphics2D g, int row, int col, Color color) {
         int x = col * CELL, y = row * CELL;
 
@@ -312,12 +291,12 @@ public class GamePanel extends JPanel implements ActionListener {
         g.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
 
         g.setColor(color.brighter());
-        g.drawLine(x + 1,        y + 1, x + CELL - 2, y + 1);        // top
-        g.drawLine(x + 1,        y + 1, x + 1,        y + CELL - 2); // left
+        g.drawLine(x + 1,        y + 1, x + CELL - 2, y + 1);        
+        g.drawLine(x + 1,        y + 1, x + 1,        y + CELL - 2); 
 
         g.setColor(color.darker());
-        g.drawLine(x + 1,        y + CELL - 1, x + CELL - 1, y + CELL - 1); // bottom
-        g.drawLine(x + CELL - 1, y + 1,        x + CELL - 1, y + CELL - 1); // right
+        g.drawLine(x + 1,        y + CELL - 1, x + CELL - 1, y + CELL - 1); 
+        g.drawLine(x + CELL - 1, y + 1,        x + CELL - 1, y + CELL - 1); 
     }
 
     private void drawBoardBorder(Graphics2D g) {
@@ -325,7 +304,6 @@ public class GamePanel extends JPanel implements ActionListener {
         g.drawRect(0, 0, BOARD_W - 1, BOARD_H - 1);
     }
 
-    // ---- Side panel ----------------------------------------------------------
 
     private void drawSidePanel(Graphics2D g) {
         int x = BOARD_W + 10;
@@ -355,10 +333,9 @@ public class GamePanel extends JPanel implements ActionListener {
         g.drawString(text, x, y);
     }
 
-    /** 4×4 preview using a smaller cell size. */
     private void drawNextPiece(Graphics2D g, int x, int y) {
         int previewCell = 20;
-        int[] cells = nextType.getCells(0); // spawn rotation
+        int[] cells = nextType.getCells(0); 
 
         for (int i = 0; i < 16; i++) {
             if (cells[i] == 1) {
@@ -382,7 +359,7 @@ public class GamePanel extends JPanel implements ActionListener {
         for (int i = 0; i < hints.length; i++) g.drawString(hints[i], x, y + i * 15);
     }
 
-    // ---- Overlays ------------------------------------------------------------
+
 
     private void drawPauseOverlay(Graphics2D g) {
         g.setColor(PAUSED_OVERLAY);
